@@ -1,7 +1,7 @@
 require('@babel/register')({
   presets: [
     '@babel/preset-env',
-    ['@babel/preset-react', { runtime: 'automatic' }],
+    ['@babel/preset-react', {runtime: 'automatic'}],
   ],
   plugins: [
     [
@@ -12,40 +12,30 @@ require('@babel/register')({
       },
     ],
   ],
-});
-const React = require('react');
-const ReactDOMServer = require('react-dom/server');
-const App = require('../src/App').default;
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
+})
+const React = require('react')
+const ReactDOMServer = require('react-dom/server')
+const App = require('../src/App').default
+const express = require('express')
+const path = require('path')
+const fs = require('fs')
+const {counter} = require('./prom')
+const app = express()
 
-const app = express();
+app.get('/', (req, res, next) => {
+  counter.labels({url: req.url}).inc()
+  const reactApp = ReactDOMServer.renderToString(React.createElement(App))
 
-app.get('/*', (req, res, next) => {
-  console.log(`Request URL = ${req.url}`);
-  if (req.url !== '/') {
-    return next();
-  }
-  const reactApp = ReactDOMServer.renderToString(React.createElement(App));
-  console.log(reactApp);
-
-  const indexFile = path.resolve('build/index.html');
-  fs.readFile(indexFile, 'utf8', (err, data) => {
-    if (err) {
-      const errMsg = `There is an error: ${err}`;
-      console.error(errMsg);
-      return res.status(500).send(errMsg);
-    }
-
+  const indexFile = path.resolve('build/index.html')
+  fs.readFile(indexFile, 'utf8', (_, data) => {
     return res.send(
       data.replace('<div id="root"></div>', `<div id="root">${reactApp}</div>`)
-    );
-  });
-});
+    )
+  })
+})
 
-app.use(express.static(path.resolve(__dirname, '../build')));
+app.use(express.static(path.resolve(__dirname, '../build')))
 
 app.listen(8080, () =>
   console.log('Express server is running on localhost:8080')
-);
+)
