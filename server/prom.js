@@ -7,11 +7,12 @@ const gateway = new PromClient.Pushgateway(
   registry
 )
 
-function initMonit() {
+export function initMonit() {
   setInterval(async () => {
     try {
       await gateway.pushAdd({
         jobName: service,
+        groupings: {process: String(process.pid)},
       })
     } catch (error) {
       console.error('pushgateway error', error)
@@ -26,4 +27,9 @@ export const counter = new PromClient.Counter({
   labelNames: ['url'],
 })
 
-initMonit()
+export const histogram = new PromClient.Histogram({
+  registers: [registry],
+  name: 'ssr_histogram_3',
+  help: 'ssr histogram',
+  labelNames: ['url'],
+})
